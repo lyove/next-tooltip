@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Next tooltip</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+      }
+
+      #app {
+        text-align: center;
+      }
+
+      .table {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .table__row {
+        height: 50vh;
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+      }
+
+      .item {
+        display: inline-block;
+        background: #2da0e9;
+        color: #fff;
+        border-radius: 5px;
+        padding: 13px 18px;
+        cursor: pointer;
+      }
+
+      .item:hover {
+        background: #1689d2;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="app">
+      <h1>Next-Tooltip</h1>
+      <a href="https://github.com/meta-explore/next-tooltip" target="_blank">
+        Next-tooltip Github
+      </a>
+    </div>
+    <div class="table__row">
+      <span class="item" data-placement="bottom">Bottom</span>
+      <span class="item" data-placement="top">Top</span>
+    </div>
+    <div class="table__row">
+      <span class="item" data-placement="left">Left</span>
+      <span class="item" data-placement="right">Right</span>
+    </div>
+    <script type="module">
+      import Tooltip from "./src/index.ts";
+
+      const tooltip = new Tooltip();
+      const items = document.getElementsByClassName("item");
+      Array.from(items).forEach((item) => {
+        tooltip.onHover(item, "Some text", {
+          placement: item.dataset.placement,
+        });
+      });
+    </script>
+  </body>
+</html>
