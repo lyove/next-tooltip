@@ -5,9 +5,9 @@ import type { TooltipContent, TooltipOptions } from "./types";
  *
  * Tiny any beautiful tooltips module.
  *
- * https://github.com/meta-explore/next-tooltip
+ * https://github.com/lyove/next-tooltip
  *
- * @author Meta-Explore
+ * @author Lyove
  * @licence MIT
  */
 export default class Tooltip {

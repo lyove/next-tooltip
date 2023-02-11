@@ -1,6 +1,6 @@
 # NextTooltip
 
-Tiny tooltip library 
+Tiny tooltip library
 
 [![Edit new](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/next-tooltip-rvctui)
 
@@ -14,7 +14,6 @@ Tiny tooltip library
 - Prettier - formatter
 - Jest - test framework
 - Husky + lint-staged - pre-commit git hook set up for formatting
-
 
 ## 📦 Getting Started
 
@@ -34,9 +33,9 @@ const tooltip = new NextTooltip();
 ### 🚀 self-host/cdn
 
 ```
-<script src="build/index.js"></script>
+<script src="dist/index.js"></script>
 
-const NextTooltip = window.NextTooltip.default;
+const NextTooltip = window.NextTooltip;
 const tooltip = new NextTooltip();
 ...
 ```
