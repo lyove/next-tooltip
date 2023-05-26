@@ -33,7 +33,7 @@ const tooltip = new NextTooltip();
 ### 🚀 self-host/cdn
 
 ```
-<script src="dist/index.js"></script>
+<script src="https://unpkg.com/next-tooltip@0.0.2/next-tooltip.umd.js"></script>
 
 const NextTooltip = window.NextTooltip;
 const tooltip = new NextTooltip();
