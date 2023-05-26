@@ -20,6 +20,15 @@
     }
   },
   "license": "MIT",
+  "keywords": [
+    "tooltip",
+    "tooltip.js",
+    "tiny-tooltip"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "scripts": {
     "dev": "vite --host",
     "build": "tsc && vite build && dts-bundle-generator --config ./dts-bundle-generator.config.ts",
