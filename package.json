@@ -1,6 +1,5 @@
 {
   "name": "next-tooltip",
-  "private": true,
   "version": "0.0.2",
   "description": "Tiny any beautiful tooltip plugin",
   "repository": {
