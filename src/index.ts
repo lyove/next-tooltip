@@ -1,5 +1,56 @@
 import "./index.css";
-import type { TooltipContent, TooltipOptions } from "./types";
+
+/**
+ * Tooltip supported content
+ */
+type TooltipContent = HTMLElement | DocumentFragment | Node | string;
+
+/**
+ * Tooltip placement
+ */
+type Placement = "top" | "right" | "bottom" | "left";
+
+/**
+ * Base options interface for tooltips
+ */
+interface TooltipOptions {
+  /**
+   * Tooltip placement: top|bottom|left|right
+   */
+  placement?: Placement;
+
+  /**
+   * Tooltip top margin
+   */
+  marginTop?: number;
+
+  /**
+   * Tooltip left margin
+   */
+  marginLeft?: number;
+
+  /**
+   * Tooltip right margin
+   */
+  marginRight?: number;
+
+  /**
+   * Tooltip bottom margin
+   */
+  marginBottom?: number;
+
+  /**
+   * Timout before showing
+   */
+  delay?: number;
+
+  /**
+   * Timout before hiding
+   */
+  hidingDelay?: number;
+}
+
+// export type { TooltipOptions, TooltipContent };
 
 /**
  *
@@ -92,11 +143,7 @@ export default class Tooltip {
    * @param {TooltipContent} content — any HTML Element of String that will be used as content
    * @param {TooltipOptions} options — Available options {@link TooltipOptions}
    */
-  public show(
-    element: HTMLElement,
-    content: TooltipContent,
-    options: TooltipOptions
-  ): void {
+  public show(element: HTMLElement, content: TooltipContent, options: TooltipOptions): void {
     if (!this.nodes.wrapper) {
       this.prepare();
     }
@@ -130,7 +177,7 @@ export default class Tooltip {
       this.nodes.content?.appendChild(content);
     } else {
       throw Error(
-        `[Next Tooltip] Wrong type of «content» passed. It should be an instance of Node or String. But ${typeof content} given.`
+        `[Next Tooltip] Wrong type of «content» passed. It should be an instance of Node or String. But ${typeof content} given.`,
       );
     }
 
@@ -199,11 +246,7 @@ export default class Tooltip {
    * @param {TooltipContent} content — any HTML Element of String that will be used as content
    * @param {TooltipOptions} options — Available options {@link TooltipOptions}
    */
-  public onHover(
-    element: HTMLElement,
-    content: TooltipContent,
-    options: TooltipOptions
-  ): void {
+  public onHover(element: HTMLElement, content: TooltipContent, options: TooltipOptions): void {
     element.addEventListener("mouseenter", () => {
       this.show(element, content, options);
     });
@@ -251,7 +294,7 @@ export default class Tooltip {
       return;
     }
 
-    const styles = new URL("./styles/index.css", import.meta.url);
+    const styles = new URL("./index.css", import.meta.url);
     const tag = this.make("style", "", {
       textContent: styles.toString(),
       id,
@@ -269,16 +312,11 @@ export default class Tooltip {
    * @param {HTMLElement} element
    * @param {TooltipOptions} showingOptions
    */
-  private placeBottom(
-    element: HTMLElement,
-    showingOptions: TooltipOptions
-  ): void {
+  private placeBottom(element: HTMLElement, showingOptions: TooltipOptions): void {
     if (this.nodes.wrapper instanceof HTMLElement) {
       const elementCoords = element.getBoundingClientRect();
       const left =
-        elementCoords.left +
-        element.clientWidth / 2 -
-        this.nodes.wrapper.offsetWidth / 2;
+        elementCoords.left + element.clientWidth / 2 - this.nodes.wrapper.offsetWidth / 2;
       const top =
         elementCoords.bottom +
         window.pageYOffset +
@@ -295,21 +333,13 @@ export default class Tooltip {
    * @param {HTMLElement} element
    * @param {TooltipOptions} _showingOptions
    */
-  private placeTop(
-    element: HTMLElement,
-    _showingOptions: TooltipOptions
-  ): void {
+  private placeTop(element: HTMLElement, _showingOptions: TooltipOptions): void {
     if (this.nodes.wrapper instanceof HTMLElement) {
       const elementCoords = element.getBoundingClientRect();
       const left =
-        elementCoords.left +
-        element.clientWidth / 2 -
-        this.nodes.wrapper.offsetWidth / 2;
+        elementCoords.left + element.clientWidth / 2 - this.nodes.wrapper.offsetWidth / 2;
       const top =
-        elementCoords.top +
-        window.pageYOffset -
-        this.nodes.wrapper.clientHeight -
-        this.offsetTop;
+        elementCoords.top + window.pageYOffset - this.nodes.wrapper.clientHeight - this.offsetTop;
 
       this.applyPlacement("top", left, top);
     }
@@ -321,10 +351,7 @@ export default class Tooltip {
    * @param {HTMLElement} element
    * @param {TooltipOptions} showingOptions
    */
-  private placeLeft(
-    element: HTMLElement,
-    showingOptions: TooltipOptions
-  ): void {
+  private placeLeft(element: HTMLElement, showingOptions: TooltipOptions): void {
     if (this.nodes.wrapper instanceof HTMLElement) {
       const elementCoords = element.getBoundingClientRect();
       const left =
@@ -348,16 +375,10 @@ export default class Tooltip {
    * @param {HTMLElement} element
    * @param {TooltipOptions} showingOptions
    */
-  private placeRight(
-    element: HTMLElement,
-    showingOptions: TooltipOptions
-  ): void {
+  private placeRight(element: HTMLElement, showingOptions: TooltipOptions): void {
     if (this.nodes.wrapper instanceof HTMLElement) {
       const elementCoords = element.getBoundingClientRect();
-      const left =
-        elementCoords.right +
-        this.offsetRight +
-        (showingOptions.marginRight || 0);
+      const left = elementCoords.right + this.offsetRight + (showingOptions.marginRight || 0);
       const top =
         elementCoords.top +
         window.pageYOffset +
@@ -374,7 +395,7 @@ export default class Tooltip {
   private applyPlacement(
     place: Required<TooltipOptions>["placement"],
     left: number,
-    top: number
+    top: number,
   ): void {
     if (this.nodes.wrapper instanceof HTMLElement) {
       this.nodes.wrapper.classList.add(this.CSS.placement[place]);
@@ -391,11 +412,7 @@ export default class Tooltip {
    * @param  {Object} attributes        - any attributes
    * @return {HTMLElement}
    */
-  private make(
-    tagName: string,
-    classNames: string | string[],
-    attributes = {}
-  ): HTMLElement {
+  private make(tagName: string, classNames: string | string[], attributes = {}): HTMLElement {
     const el = document.createElement(tagName);
 
     if (Array.isArray(classNames)) {
@@ -404,9 +421,7 @@ export default class Tooltip {
       el.classList.add(classNames);
     }
 
-    Object.entries(attributes).forEach(
-      ([key, val]) => val && el.setAttribute(key, `${val}`)
-    );
+    Object.entries(attributes).forEach(([key, val]) => val && el.setAttribute(key, `${val}`));
 
     return el;
   }
@@ -419,7 +434,7 @@ export default class Tooltip {
    */
   private append(
     parent: Element | DocumentFragment,
-    elements: Element | Element[] | DocumentFragment
+    elements: Element | Element[] | DocumentFragment,
   ): void {
     if (Array.isArray(elements)) {
       elements.forEach((el) => parent.appendChild(el));
