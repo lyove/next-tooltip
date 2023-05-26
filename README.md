@@ -30,10 +30,11 @@ const tooltip = new NextTooltip();
 ...
 ```
 
-### 🚀 self-host/cdn
+### 🚀 cdn
 
 ```
-<script src="https://unpkg.com/next-tooltip@0.0.2/next-tooltip.umd.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/next-tooltip@latest/dist/style.css">
+<script src="https://unpkg.com/next-tooltip@latest/dist/next-tooltip.umd.js"></script>
 
 const NextTooltip = window.NextTooltip;
 const tooltip = new NextTooltip();
