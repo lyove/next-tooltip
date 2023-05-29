@@ -137,6 +137,22 @@ export default class Tooltip {
   }
 
   /**
+   * Mouseover/Mouseleave decorator
+   *
+   * @param {HTMLElement} element - target element to place Tooltip near that
+   * @param {TooltipContent} content — any HTML Element of String that will be used as content
+   * @param {TooltipOptions} options — Available options {@link TooltipOptions}
+   */
+  public onHover(element: HTMLElement, content: TooltipContent, options: TooltipOptions): void {
+    element.addEventListener("mouseenter", () => {
+      this.show(element, content, options);
+    });
+    element.addEventListener("mouseleave", () => {
+      this.hide();
+    });
+  }
+  
+  /**
    * Show Tooltip near passed element with specified HTML content
    *
    * @param {HTMLElement} element - target element to place Tooltip near that
@@ -239,22 +255,6 @@ export default class Tooltip {
     if (this.showingTimeout) {
       clearTimeout(this.showingTimeout);
     }
-  }
-
-  /**
-   * Mouseover/Mouseleave decorator
-   *
-   * @param {HTMLElement} element - target element to place Tooltip near that
-   * @param {TooltipContent} content — any HTML Element of String that will be used as content
-   * @param {TooltipOptions} options — Available options {@link TooltipOptions}
-   */
-  public onHover(element: HTMLElement, content: TooltipContent, options: TooltipOptions): void {
-    element.addEventListener("mouseenter", () => {
-      this.show(element, content, options);
-    });
-    element.addEventListener("mouseleave", () => {
-      this.hide();
-    });
   }
 
   /**
