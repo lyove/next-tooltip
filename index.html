@@ -57,10 +57,10 @@
     <script type="module">
       import Tooltip from "./src/index.ts";
 
-      const tooltip = new Tooltip();
+      const { NextTooltip } = window;
       const items = document.getElementsByClassName("item");
       Array.from(items).forEach((item) => {
-        tooltip.onHover(item, "Some text", {
+        NextTooltip.onHover(item, "<p>Hellow world</p>", {
           placement: item.dataset.placement,
         });
       });
