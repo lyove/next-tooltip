@@ -1,4 +1,4 @@
-# NextTooltip
+# 📦 NextTooltip
 
 Tiny tooltip library
 
@@ -17,17 +17,14 @@ Tiny tooltip library
 
 ## 📦 Getting Started
 
-```
-git clone https://github.com/lyove/next-tooltip.git
-npm install
-```
-
 ### 💎 npm
 
 ```
 import NextTooltip from 'next-tooltip';
-const tooltip = new NextTooltip();
-...
+
+NextTooltip.onHover(item, "<p>next tooltip</p>", {
+  placement: "top",
+});
 ```
 
 ### 🚀 cdn
@@ -36,9 +33,11 @@ const tooltip = new NextTooltip();
 <link rel="stylesheet" href="https://unpkg.com/next-tooltip@latest/dist/style.css">
 <script src="https://unpkg.com/next-tooltip@latest/dist/next-tooltip.umd.js"></script>
 
-const NextTooltip = window.NextTooltip;
-const tooltip = new NextTooltip();
-...
+const { NextTooltip } = window;
+
+NextTooltip.onHover(item, "<p>next tooltip</p>", {
+  placement: "top",
+});
 ```
 
 ## ✅ About
