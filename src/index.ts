@@ -63,9 +63,9 @@ interface TooltipOptions {
  */
 export default class Tooltip {
   /**
-   * Tooltip CSS classes
+   * Tooltip classNames
    */
-  private get CSS() {
+  private get classNames() {
     return {
       tooltip: "next-tooltip",
       tooltipContent: "next-tooltip--content",
@@ -172,7 +172,9 @@ export default class Tooltip {
     }
 
     if (typeof content === "string") {
-      this.nodes.content?.appendChild(document.createTextNode(content));
+      const htmlNode = document.createElement("div");
+      htmlNode.innerHTML = content;
+      this.nodes.content?.appendChild(htmlNode);
     } else if (content instanceof Node) {
       this.nodes.content?.appendChild(content);
     } else {
@@ -181,7 +183,7 @@ export default class Tooltip {
       );
     }
 
-    this.nodes.wrapper?.classList.remove(...Object.values(this.CSS.placement));
+    this.nodes.wrapper?.classList.remove(...Object.values(this.classNames.placement));
 
     switch (showingOptions.placement) {
       case "top":
@@ -204,11 +206,11 @@ export default class Tooltip {
 
     if (showingOptions && showingOptions.delay) {
       this.showingTimeout = setTimeout(() => {
-        this.nodes.wrapper?.classList.add(this.CSS.tooltipShown);
+        this.nodes.wrapper?.classList.add(this.classNames.tooltipShown);
         this.showed = true;
       }, showingOptions.delay);
     } else {
-      this.nodes.wrapper?.classList.add(this.CSS.tooltipShown);
+      this.nodes.wrapper?.classList.add(this.classNames.tooltipShown);
       this.showed = true;
     }
   }
@@ -231,7 +233,7 @@ export default class Tooltip {
       return;
     }
 
-    this.nodes.wrapper?.classList.remove(this.CSS.tooltipShown);
+    this.nodes.wrapper?.classList.remove(this.classNames.tooltipShown);
     this.showed = false;
 
     if (this.showingTimeout) {
@@ -277,15 +279,21 @@ export default class Tooltip {
    * Module Preparation method
    */
   private prepare(): void {
-    this.nodes.wrapper = this.make("div", this.CSS.tooltip);
-    this.nodes.content = this.make("div", this.CSS.tooltipContent);
+    const wrapNode = document.querySelectorAll(`.${this.classNames.tooltip}`);
+    if (wrapNode?.length > 0) {
+      wrapNode.forEach((item) => {
+        item.parentNode?.removeChild(item);
+      });
+    }
+    this.nodes.wrapper = this.make("div", this.classNames.tooltip);
+    this.nodes.content = this.make("div", this.classNames.tooltipContent);
 
     this.append(this.nodes.wrapper, this.nodes.content);
     this.append(document.body, this.nodes.wrapper);
   }
 
   /**
-   * Append CSS file
+   * Append css file
    */
   private loadStyles(): void {
     const id = "next-tooltip-style";
@@ -398,7 +406,7 @@ export default class Tooltip {
     top: number,
   ): void {
     if (this.nodes.wrapper instanceof HTMLElement) {
-      this.nodes.wrapper.classList.add(this.CSS.placement[place]);
+      this.nodes.wrapper.classList.add(this.classNames.placement[place]);
       this.nodes.wrapper.style.left = `${left}px`;
       this.nodes.wrapper.style.top = `${top}px`;
     }
@@ -408,7 +416,7 @@ export default class Tooltip {
    * Helper for making Elements with classname and attributes
    *
    * @param  {string} tagName           - new Element tag name
-   * @param  {array|string} classNames  - list or name of CSS classname(s)
+   * @param  {array|string} classNames  - list or name of classname
    * @param  {Object} attributes        - any attributes
    * @return {HTMLElement}
    */
