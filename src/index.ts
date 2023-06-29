@@ -1,9 +1,59 @@
 import "./index.css";
 
 /**
+ * @desc Debounce
+ * @param {function} fn
+ * @param {number} delay
+ * @param {Boolean} immediate
+ */
+function debounce(fn: () => any, delay: number, immediate: boolean) {
+  if (typeof fn != "function") {
+    throw new Error("fn is not a function");
+  }
+  let timer: any = null;
+  return function (...args: any) {
+    if (timer) {
+      clearTimeout(timer);
+    }
+    if (!timer && immediate) {
+      fn.apply(this, args);
+    } else {
+      timer = setTimeout(() => {
+        fn.apply(this, args);
+      }, delay);
+    }
+  };
+}
+
+/**
+ * Throttle
+ * @param {function} fn
+ * @param {number} delay
+ */
+function throttle(fn: () => any, delay: number) {
+  if (typeof fn != "function") {
+    throw new Error("fn is not a function");
+  }
+  let pre = 0;
+  let timer: any = null;
+  return function (...args: any) {
+    if (Date.now() - pre > delay) {
+      clearTimeout(timer);
+      timer = null;
+      pre = Date.now();
+      fn.apply(this, args);
+    } else {
+      timer = setTimeout(() => {
+        fn.apply(this, args);
+      }, delay);
+    }
+  };
+}
+
+/**
  * Tooltip supported content
  */
-type TooltipContent = HTMLElement | DocumentFragment | Node | string;
+type TooltipContent = HTMLElement | DocumentFragment | Node | string | null;
 
 /**
  * Tooltip placement
@@ -43,14 +93,9 @@ interface TooltipOptions {
    * Timout before showing
    */
   delay?: number;
-
-  /**
-   * Timout before hiding
-   */
-  hidingDelay?: number;
 }
 
-// export type { TooltipOptions, TooltipContent };
+export type { TooltipOptions, TooltipContent };
 
 /**
  *
@@ -63,14 +108,29 @@ interface TooltipOptions {
  */
 export default class Tooltip {
   /**
+   * Config options
+   */
+  private options: TooltipOptions = {
+    placement: "top",
+    marginTop: 0,
+    marginLeft: 0,
+    marginRight: 0,
+    marginBottom: 0,
+    delay: 200,
+  };
+
+  /**
    * Tooltip classNames
    */
   private get classNames() {
     return {
       tooltip: "next-tooltip",
-      tooltipContent: "next-tooltip--content",
-      tooltipShown: "next-tooltip--shown",
-      placement: {
+      contentClass: "next-tooltip--content",
+      enterClass: "next-zoom-enter",
+      leaveClass: "next-zoom-leave",
+      shownClass: "next-tooltip--shown",
+      hiddenClass: "next-tooltip--hidden",
+      placementClass: {
         left: "next-tooltip--left",
         bottom: "next-tooltip--bottom",
         right: "next-tooltip--right",
@@ -78,6 +138,7 @@ export default class Tooltip {
       },
     };
   }
+
   /**
    * Module nodes
    */
@@ -88,11 +149,6 @@ export default class Tooltip {
     wrapper: null,
     content: null,
   };
-
-  /**
-   * Appearance state
-   */
-  private showed = false;
 
   /**
    * Offset above the Tooltip
@@ -115,43 +171,79 @@ export default class Tooltip {
   private showingTimeout: any;
 
   /**
-   * How many milliseconds need to wait before hiding
-   */
-  private hidingDelay = 0;
-
-  /**
    * Store timeout before hiding
    */
   private hidingTimeout: any;
+
+  /**
+   * mouse enter time
+   */
+  private enterTime = 0;
+
+  /**
+   * mouse leave time
+   */
+  private leaveTime = 0;
 
   /**
    * Module constructor
    */
   constructor() {
     this.loadStyles();
-    this.prepare();
+  }
 
-    window.addEventListener("scroll", this.handleWindowScroll, {
-      passive: true,
-    });
+  /**
+   * Module Preparation method
+   */
+  private prepare() {
+    const wrapNode = document.querySelectorAll(`.${this.classNames.tooltip}`);
+    if (wrapNode?.length > 0) {
+      wrapNode.forEach((item) => {
+        item.parentNode?.removeChild(item);
+      });
+    }
+    this.nodes.wrapper = this.createElement("div", [
+      this.classNames.tooltip,
+      this.classNames.hiddenClass,
+    ]);
+    this.nodes.content = this.createElement("div", this.classNames.contentClass);
+
+    this.append(this.nodes.wrapper, this.nodes.content);
+    this.append(document.body, this.nodes.wrapper);
   }
 
   /**
    * Mouseover/Mouseleave decorator
    *
-   * @param {HTMLElement} element - target element to place Tooltip near that
+   * @param {HTMLElement} trigger - target element to place Tooltip near that
    * @param {TooltipContent} content — any HTML Element of String that will be used as content
    * @param {TooltipOptions} options — Available options {@link TooltipOptions}
    */
-  public onHover(element: HTMLElement, content: TooltipContent, options: TooltipOptions): void {
-    element.addEventListener("mouseenter", () => {
-      this.show(element, content, options);
-    });
-    element.addEventListener("mouseleave", () => {
-      this.hide();
-    });
+  public onHover(trigger: HTMLElement, content: TooltipContent, options: TooltipOptions) {
+    const placement = options.placement || this.options.placement;
+    const delay = Number(options.delay) || this.options.delay || 100;
+    const mergedOptions = {
+      ...this.options,
+      ...options,
+      placement,
+      delay,
+    };
+
+    trigger.addEventListener(
+      "mouseenter",
+      throttle(() => {
+        this.show(trigger, content, mergedOptions);
+      }, delay + 300),
+    );
+
+    trigger.addEventListener(
+      "mouseleave",
+      throttle(() => {
+        this.hide(mergedOptions);
+      }, delay + 300),
+    );
   }
-  
+
   /**
    * Show Tooltip near passed element with specified HTML content
    *
@@ -159,143 +251,121 @@ export default class Tooltip {
    * @param {TooltipContent} content — any HTML Element of String that will be used as content
    * @param {TooltipOptions} options — Available options {@link TooltipOptions}
    */
-  public show(element: HTMLElement, content: TooltipContent, options: TooltipOptions): void {
-    if (!this.nodes.wrapper) {
-      this.prepare();
-    }
-
-    if (this.hidingTimeout) {
-      clearTimeout(this.hidingTimeout);
-    }
-
-    const basicOptions = {
-      placement: "bottom",
-      marginTop: 0,
-      marginLeft: 0,
-      marginRight: 0,
-      marginBottom: 0,
-      delay: 70,
-      hidingDelay: 0,
-    };
-    const showingOptions = Object.assign(basicOptions, options);
-
-    if (showingOptions.hidingDelay) {
-      this.hidingDelay = showingOptions.hidingDelay;
-    }
-
-    if (this.nodes.content instanceof HTMLElement) {
-      this.nodes.content.innerHTML = "";
-    }
-
-    if (typeof content === "string") {
-      const htmlNode = document.createElement("div");
-      htmlNode.innerHTML = content;
-      this.nodes.content?.appendChild(htmlNode);
-    } else if (content instanceof Node) {
-      this.nodes.content?.appendChild(content);
-    } else {
-      throw Error(
-        `[Next Tooltip] Wrong type of «content» passed. It should be an instance of Node or String. But ${typeof content} given.`,
+  public show(element: HTMLElement, content: TooltipContent, options: TooltipOptions) {
+    if (!(element instanceof Node)) {
+      throw new Error(
+        `[Next Tooltip] Wrong type of «trigger». It should be an instance of Node. But ${typeof element} given.`,
       );
     }
 
-    this.nodes.wrapper?.classList.remove(...Object.values(this.classNames.placement));
+    if (!this.nodes.wrapper) {
+      this.prepare();
+      console.log(1111);
+    }
+    console.log(2222);
 
-    switch (showingOptions.placement) {
+    const { wrapper, content: curContent } = this.nodes;
+    const { placement, delay = 100 } = options;
+    const { shownClass, hiddenClass, enterClass, leaveClass, placementClass } = this.classNames;
+
+    this.enterTime = Date.now();
+
+    wrapper?.classList.remove(...Object.values(placementClass));
+
+    // content
+    if (curContent instanceof HTMLElement) {
+      curContent.innerHTML = "";
+    }
+    if (typeof content === "string") {
+      const htmlNode = document.createElement("div");
+      htmlNode.innerHTML = content;
+      curContent?.appendChild(htmlNode);
+    } else if (content instanceof Node) {
+      curContent?.appendChild(content);
+    }
+
+    // placement
+    switch (placement) {
       case "top":
-        this.placeTop(element, showingOptions);
+        this.placeTop(element);
         break;
 
       case "left":
-        this.placeLeft(element, showingOptions);
+        this.placeLeft(element);
         break;
 
       case "right":
-        this.placeRight(element, showingOptions);
+        this.placeRight(element);
         break;
 
       case "bottom":
       default:
-        this.placeBottom(element, showingOptions);
+        this.placeBottom(element);
         break;
     }
 
-    if (showingOptions && showingOptions.delay) {
-      this.showingTimeout = setTimeout(() => {
-        this.nodes.wrapper?.classList.add(this.classNames.tooltipShown);
-        this.showed = true;
-      }, showingOptions.delay);
-    } else {
-      this.nodes.wrapper?.classList.add(this.classNames.tooltipShown);
-      this.showed = true;
+    const duration = this.leaveTime - Date.now();
+    if (duration < delay && this.hidingTimeout) {
+      clearTimeout(this.hidingTimeout);
+      wrapper?.classList.remove(leaveClass);
     }
+
+    wrapper?.classList.remove(hiddenClass);
+
+    // add animation class
+    wrapper?.classList.add(enterClass);
+
+    this.showingTimeout = setTimeout(() => {
+      wrapper?.classList.remove(enterClass);
+      wrapper?.classList.add(shownClass);
+    }, delay);
   }
 
   /**
    * Hide toolbox tooltip and clean content
-   * @param {boolean} skipDelay - forces hiding immediately
+   * @param {TooltipOptions} options — Available options {@link TooltipOptions}
    */
-  public hide(skipDelay = false): void {
-    if (this.hidingDelay && !skipDelay) {
-      // debounce
-      if (this.hidingTimeout) {
-        clearTimeout(this.hidingTimeout);
-      }
+  public hide(options: TooltipOptions = {}) {
+    const { wrapper } = this.nodes;
+    const { delay = this.options.delay || 100 } = options;
+    const { shownClass, hiddenClass, leaveClass } = this.classNames;
 
-      this.hidingTimeout = setTimeout(() => {
-        this.hide(true);
-      }, this.hidingDelay);
+    this.leaveTime = Date.now();
 
-      return;
-    }
-
-    this.nodes.wrapper?.classList.remove(this.classNames.tooltipShown);
-    this.showed = false;
-
-    if (this.showingTimeout) {
+    if (Date.now() - this.enterTime < delay && this.showingTimeout) {
       clearTimeout(this.showingTimeout);
     }
+
+    wrapper?.classList.remove(shownClass);
+
+    // add animation class
+    wrapper?.classList.add(leaveClass);
+
+    this.hidingTimeout = setTimeout(() => {
+      wrapper?.classList.remove(leaveClass);
+      wrapper?.classList.add(hiddenClass);
+      this.destroy();
+    }, delay);
   }
 
   /**
    * Release DOM and event listeners
    */
-  public destroy(): void {
-    this.nodes.wrapper?.remove();
-
-    window.removeEventListener("scroll", this.handleWindowScroll);
-  }
-
-  /**
-   * Hide tooltip when page is scrolled
-   */
-  private handleWindowScroll = () => {
-    if (this.showed) {
-      this.hide(true);
+  public destroy() {
+    const { wrapper } = this.nodes;
+    if (wrapper && document.body.contains(wrapper)) {
+      document.body.removeChild(wrapper);
     }
-  };
-
-  /**
-   * Module Preparation method
-   */
-  private prepare(): void {
-    const wrapNode = document.querySelectorAll(`.${this.classNames.tooltip}`);
-    if (wrapNode?.length > 0) {
-      wrapNode.forEach((item) => {
-        item.parentNode?.removeChild(item);
-      });
-    }
-    this.nodes.wrapper = this.make("div", this.classNames.tooltip);
-    this.nodes.content = this.make("div", this.classNames.tooltipContent);
-
-    this.append(this.nodes.wrapper, this.nodes.content);
-    this.append(document.body, this.nodes.wrapper);
+    this.nodes = {
+      wrapper: null,
+      content: null,
+    };
   }
 
   /**
    * Append css file
    */
-  private loadStyles(): void {
+  private loadStyles() {
     const id = "next-tooltip-style";
 
     if (document.getElementById(id)) {
@@ -303,7 +373,7 @@ export default class Tooltip {
     }
 
     const styles = new URL("./index.css", import.meta.url);
-    const tag = this.make("style", "", {
+    const tag = this.createElement("style", "", {
       textContent: styles.toString(),
       id,
     });
@@ -318,18 +388,14 @@ export default class Tooltip {
    * Calculates element coords and moves tooltip bottom of the element
    *
    * @param {HTMLElement} element
-   * @param {TooltipOptions} showingOptions
    */
-  private placeBottom(element: HTMLElement, showingOptions: TooltipOptions): void {
-    if (this.nodes.wrapper instanceof HTMLElement) {
-      const elementCoords = element.getBoundingClientRect();
-      const left =
-        elementCoords.left + element.clientWidth / 2 - this.nodes.wrapper.offsetWidth / 2;
+  private placeBottom(element: HTMLElement) {
+    const { wrapper } = this.nodes;
+    if (wrapper instanceof HTMLElement) {
+      const elementRect = element.getBoundingClientRect();
+      const left = elementRect.left + element.clientWidth / 2 - wrapper.offsetWidth / 2;
       const top =
-        elementCoords.bottom +
-        window.pageYOffset +
-        this.offsetTop +
-        (showingOptions?.marginTop || 0);
+        elementRect.bottom + window.scrollY + this.offsetTop + (this.options?.marginTop || 0);
 
       this.applyPlacement("bottom", left, top);
     }
@@ -339,15 +405,13 @@ export default class Tooltip {
    * Calculates element coords and moves tooltip top of the element
    *
    * @param {HTMLElement} element
-   * @param {TooltipOptions} _showingOptions
    */
-  private placeTop(element: HTMLElement, _showingOptions: TooltipOptions): void {
-    if (this.nodes.wrapper instanceof HTMLElement) {
-      const elementCoords = element.getBoundingClientRect();
-      const left =
-        elementCoords.left + element.clientWidth / 2 - this.nodes.wrapper.offsetWidth / 2;
-      const top =
-        elementCoords.top + window.pageYOffset - this.nodes.wrapper.clientHeight - this.offsetTop;
+  private placeTop(element: HTMLElement) {
+    const { wrapper } = this.nodes;
+    if (wrapper instanceof HTMLElement) {
+      const elementRect = element.getBoundingClientRect();
+      const left = elementRect.left + element.clientWidth / 2 - wrapper.offsetWidth / 2;
+      const top = elementRect.top + window.scrollY - wrapper.clientHeight - this.offsetTop;
 
       this.applyPlacement("top", left, top);
     }
@@ -357,21 +421,15 @@ export default class Tooltip {
    * Calculates element coords and moves tooltip left of the element
    *
    * @param {HTMLElement} element
-   * @param {TooltipOptions} showingOptions
    */
-  private placeLeft(element: HTMLElement, showingOptions: TooltipOptions): void {
-    if (this.nodes.wrapper instanceof HTMLElement) {
-      const elementCoords = element.getBoundingClientRect();
+  private placeLeft(element: HTMLElement) {
+    const { wrapper } = this.nodes;
+    if (wrapper instanceof HTMLElement) {
+      const elementRect = element.getBoundingClientRect();
       const left =
-        elementCoords.left -
-        this.nodes.wrapper.offsetWidth -
-        this.offsetLeft -
-        (showingOptions.marginLeft || 0);
+        elementRect.left - wrapper.offsetWidth - this.offsetLeft - (this.options.marginLeft || 0);
       const top =
-        elementCoords.top +
-        window.pageYOffset +
-        element.clientHeight / 2 -
-        this.nodes.wrapper.offsetHeight / 2;
+        elementRect.top + window.scrollY + element.clientHeight / 2 - wrapper.offsetHeight / 2;
 
       this.applyPlacement("left", left, top);
     }
@@ -383,15 +441,13 @@ export default class Tooltip {
    * @param {HTMLElement} element
    * @param {TooltipOptions} showingOptions
    */
-  private placeRight(element: HTMLElement, showingOptions: TooltipOptions): void {
-    if (this.nodes.wrapper instanceof HTMLElement) {
-      const elementCoords = element.getBoundingClientRect();
-      const left = elementCoords.right + this.offsetRight + (showingOptions.marginRight || 0);
+  private placeRight(element: HTMLElement) {
+    const { wrapper } = this.nodes;
+    if (wrapper instanceof HTMLElement) {
+      const elementRect = element.getBoundingClientRect();
+      const left = elementRect.right + this.offsetRight + (this.options.marginRight || 0);
       const top =
-        elementCoords.top +
-        window.pageYOffset +
-        element.clientHeight / 2 -
-        this.nodes.wrapper.offsetHeight / 2;
+        elementRect.top + window.scrollY + element.clientHeight / 2 - wrapper.offsetHeight / 2;
 
       this.applyPlacement("right", left, top);
     }
@@ -400,15 +456,12 @@ export default class Tooltip {
   /**
    * Set wrapper position
    */
-  private applyPlacement(
-    place: Required<TooltipOptions>["placement"],
-    left: number,
-    top: number,
-  ): void {
-    if (this.nodes.wrapper instanceof HTMLElement) {
-      this.nodes.wrapper.classList.add(this.classNames.placement[place]);
-      this.nodes.wrapper.style.left = `${left}px`;
-      this.nodes.wrapper.style.top = `${top}px`;
+  private applyPlacement(place: Required<TooltipOptions>["placement"], left: number, top: number) {
+    const { wrapper } = this.nodes;
+    if (wrapper instanceof HTMLElement) {
+      wrapper.classList.add(this.classNames.placementClass[place]);
+      wrapper.style.left = `${left}px`;
+      wrapper.style.top = `${top}px`;
     }
   }
 
@@ -420,7 +473,11 @@ export default class Tooltip {
    * @param  {Object} attributes        - any attributes
    * @return {HTMLElement}
    */
-  private make(tagName: string, classNames: string | string[], attributes = {}): HTMLElement {
+  private createElement(
+    tagName: string,
+    classNames: string | string[],
+    attributes = {},
+  ): HTMLElement {
     const el = document.createElement(tagName);
 
     if (Array.isArray(classNames)) {
@@ -443,7 +500,7 @@ export default class Tooltip {
   private append(
     parent: Element | DocumentFragment,
     elements: Element | Element[] | DocumentFragment,
-  ): void {
+  ) {
     if (Array.isArray(elements)) {
       elements.forEach((el) => parent.appendChild(el));
     } else {
@@ -457,7 +514,7 @@ export default class Tooltip {
    * @param {Element} parent - where to append
    * @param {Element|Element[]} elements - element or elements list
    */
-  private prepend(parent: Element, elements: Element | Element[]): void {
+  private prepend(parent: Element, elements: Element | Element[]) {
     if (Array.isArray(elements)) {
       elements = elements.reverse();
       elements.forEach((el) => parent.prepend(el));
