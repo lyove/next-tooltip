@@ -15,6 +15,9 @@ Tiny tooltip library
 - Jest - test framework
 - Husky + lint-staged - pre-commit git hook set up for formatting
 
+### Future plans
+a powerful and flexible tooltip pure JS library based on next-popover
+
 ## 📦 Getting Started
 
 ### 💎 npm
