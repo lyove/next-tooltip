@@ -260,9 +260,7 @@ export default class Tooltip {
 
     if (!this.nodes.wrapper) {
       this.prepare();
-      console.log(1111);
     }
-    console.log(2222);
 
     const { wrapper, content: curContent } = this.nodes;
     const { placement, delay = 100 } = options;
