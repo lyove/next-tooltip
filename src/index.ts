@@ -1,69 +1,19 @@
 import "./index.css";
 
 /**
- * @desc Debounce
- * @param {function} fn
- * @param {number} delay
- * @param {Boolean} immediate
- */
-function debounce(fn: () => any, delay: number, immediate: boolean) {
-  if (typeof fn != "function") {
-    throw new Error("fn is not a function");
-  }
-  let timer: any = null;
-  return function (...args: any) {
-    if (timer) {
-      clearTimeout(timer);
-    }
-    if (!timer && immediate) {
-      fn.apply(this, args);
-    } else {
-      timer = setTimeout(() => {
-        fn.apply(this, args);
-      }, delay);
-    }
-  };
-}
-
-/**
- * Throttle
- * @param {function} fn
- * @param {number} delay
- */
-function throttle(fn: () => any, delay: number) {
-  if (typeof fn != "function") {
-    throw new Error("fn is not a function");
-  }
-  let pre = 0;
-  let timer: any = null;
-  return function (...args: any) {
-    if (Date.now() - pre > delay) {
-      clearTimeout(timer);
-      timer = null;
-      pre = Date.now();
-      fn.apply(this, args);
-    } else {
-      timer = setTimeout(() => {
-        fn.apply(this, args);
-      }, delay);
-    }
-  };
-}
-
-/**
  * Tooltip supported content
  */
-type TooltipContent = HTMLElement | DocumentFragment | Node | string | null;
+export type TooltipContent = HTMLElement | DocumentFragment | Node | string | null;
 
 /**
  * Tooltip placement
  */
-type Placement = "top" | "right" | "bottom" | "left";
+export type Placement = "top" | "right" | "bottom" | "left";
 
 /**
  * Base options interface for tooltips
  */
-interface TooltipOptions {
+export interface TooltipOptions {
   /**
    * Tooltip placement: top|bottom|left|right
    */
@@ -94,8 +44,6 @@ interface TooltipOptions {
    */
   delay?: number;
 }
-
-export type { TooltipOptions, TooltipContent };
 
 /**
  *
@@ -220,28 +168,12 @@ export default class Tooltip {
    * @param {TooltipOptions} options — Available options {@link TooltipOptions}
    */
   public onHover(trigger: HTMLElement, content: TooltipContent, options: TooltipOptions) {
-    const placement = options.placement || this.options.placement;
-    const delay = Number(options.delay) || this.options.delay || 100;
-    const mergedOptions = {
-      ...this.options,
-      ...options,
-      placement,
-      delay,
-    };
-
-    trigger.addEventListener(
-      "mouseenter",
-      throttle(() => {
-        this.show(trigger, content, mergedOptions);
-      }, delay + 300),
-    );
-
-    trigger.addEventListener(
-      "mouseleave",
-      throttle(() => {
-        this.hide(mergedOptions);
-      }, delay + 300),
-    );
+    trigger.addEventListener("mouseenter", () => {
+      this.show(trigger, content, options);
+    });
+    trigger.addEventListener("mouseleave", () => {
+      this.hide();
+    });
   }
 
   /**
@@ -269,6 +201,7 @@ export default class Tooltip {
     this.enterTime = Date.now();
 
     wrapper?.classList.remove(...Object.values(placementClass));
+    wrapper?.classList.remove(shownClass);
 
     // content
     if (curContent instanceof HTMLElement) {
@@ -342,7 +275,7 @@ export default class Tooltip {
     this.hidingTimeout = setTimeout(() => {
       wrapper?.classList.remove(leaveClass);
       wrapper?.classList.add(hiddenClass);
-      this.destroy();
+      // this.destroy();
     }, delay);
   }
 
@@ -456,10 +389,12 @@ export default class Tooltip {
    */
   private applyPlacement(place: Required<TooltipOptions>["placement"], left: number, top: number) {
     const { wrapper } = this.nodes;
+    const { shownClass } = this.classNames;
     if (wrapper instanceof HTMLElement) {
       wrapper.classList.add(this.classNames.placementClass[place]);
       wrapper.style.left = `${left}px`;
       wrapper.style.top = `${top}px`;
+      wrapper?.classList.add(shownClass);
     }
   }
 
