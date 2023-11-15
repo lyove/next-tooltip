@@ -13,31 +13,75 @@
 
       #app {
         text-align: center;
+        background-color: #fafafa;
       }
 
-      .table {
-        display: flex;
-        flex-direction: column;
+      .placement-box {
+        position: relative;
+        width: 800px;
+        height: 500px;
+        margin: 24px auto;
+        border-radius: 6px;
+        background: #fff;
+        padding: 100px 160px 100px;
+        box-shadow: rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px,
+          rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px;
+        overflow: hidden;
       }
 
-      .table__row {
-        height: 50vh;
+      .placement-box .row {
         display: flex;
         align-items: center;
-        justify-content: space-around;
+        justify-content: space-between;
       }
 
-      .item {
-        display: inline-block;
-        background: #2da0e9;
-        color: #fff;
-        border-radius: 5px;
-        padding: 13px 18px;
+      .placement-box .center {
+        justify-content: center;
+      }
+
+      .placement-box .box-item {
+        width: 110px;
+        margin-top: 10px;
+      }
+
+      .trigger-btn {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        line-height: 1;
+        height: 32px;
+        white-space: nowrap;
         cursor: pointer;
+        text-align: center;
+        box-sizing: border-box;
+        outline: none;
+        transition: 0.1s;
+        user-select: none;
+        vertical-align: middle;
+        -webkit-appearance: none;
+        border: 1px solid rgb(220, 223, 230);
+        padding: 8px 10px;
+        border-radius: 4px;
       }
 
-      .item:hover {
-        background: #1689d2;
+      .ml-3 {
+        margin-left: 0.75rem;
+      }
+
+      .mr-3 {
+        margin-right: 0.75rem;
+      }
+
+      .mt-3 {
+        margin-top: 0.75rem;
+      }
+
+      .mb-3 {
+        margin-bottom: 0.75rem;
+      }
+
+      .center {
+        text-align: center;
       }
     </style>
   </head>
@@ -45,21 +89,64 @@
     <div id="app">
       <h1>Next-Tooltip</h1>
       <a href="https://github.com/lyove/next-tooltip" target="_blank"> Next-tooltip Github </a>
+
+      <div class="placement-box">
+        <div class="row center">
+          <!-- <button type="button" data-placement="top-start" class="trigger-btn">
+          top-start
+        </button> -->
+          <button type="button" data-placement="top" class="trigger-btn ml-3 mr-3">top</button>
+          <!-- <button type="button" data-placement="top-end" class="trigger-btn">
+          top-end
+        </button> -->
+        </div>
+        <!-- <div class="row">
+        <button type="button" data-placement="left-start" class="trigger-btn">
+          left-start
+        </button>
+        <button type="button" data-placement="right-start" class="trigger-btn">
+          right-start
+        </button>
+      </div> -->
+        <div class="row">
+          <button type="button" data-placement="left" class="trigger-btn mt-3 mb-3">left</button>
+          <button type="button" data-placement="right" class="trigger-btn mt-3 mb-3">right</button>
+        </div>
+        <!-- <div class="row">
+        <button type="button" data-placement="left-end" class="trigger-btn">
+          left-end
+        </button>
+        <button type="button" data-placement="right-end" class="trigger-btn">
+          right-end
+        </button>
+      </div> -->
+        <div class="row center">
+          <!-- <button type="button" data-placement="bottom-start" class="trigger-btn">
+          bottom-start
+        </button> -->
+          <button type="button" data-placement="bottom" class="trigger-btn ml-3 mr-3">
+            bottom
+          </button>
+          <!-- <button type="button" data-placement="bottom-end" class="trigger-btn">
+          bottom-end
+        </button> -->
+        </div>
+      </div>
     </div>
-    <div class="table__row">
-      <span class="item" data-placement="bottom">Bottom</span>
-      <span class="item" data-placement="top">Top</span>
-    </div>
-    <div class="table__row">
-      <span class="item" data-placement="left">Left</span>
-      <span class="item" data-placement="right">Right</span>
-    </div>
+
     <script type="module">
       import Tooltip from "./src/index.ts";
 
       const { NextTooltip } = window;
       const items = document.getElementsByClassName("item");
       Array.from(items).forEach((item) => {
+        NextTooltip.onHover(item, "<p>Hellow world</p>", {
+          placement: item.dataset.placement,
+        });
+      });
+
+      const triggerItems = document.querySelectorAll(".trigger-btn");
+      Array.from(triggerItems).forEach((item) => {
         NextTooltip.onHover(item, "<p>Hellow world</p>", {
           placement: item.dataset.placement,
         });
